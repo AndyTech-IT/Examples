@@ -1098,11 +1098,82 @@ void Part_1()
 	// или даже так
 	for (char c : test_mass)
 		cout << c;
-	// 
+
+	// Тема 8. Указатели и ссылки на функции
+	// Так, вот эту тему я сам не юзал, и нам про неё вроде в скользь сказали..
+	// Читал вот эту статейку: https://ravesli.com/urok-104-ukazateli-na-funktsii/
+	// Итак, синтаксис похож на обычные указатели и ссылки, с некием исключением...
+	
+	int foo();
+	int(*foo_ptr)();
+	foo_ptr = foo;
+	void bar(int);
+	void (*bar_ptr)(int) = bar;
+	// В данном случае void обязателен так же как и int в скобочках
+	// И учтите что сделать foo_ptr = bar - нельзя! у них разные прототипы!
+	// Да вспомнил, об этом я как то забыл сказать, упс, кароче у функции int a(); и int b(); - абсолётно одинаковые прототипы! 
+	// Прототип зависит от количества и типов аргументов + возвращаемое значение
+	// Ну а теперь мы можем делать так:
+
+	foo_ptr();
+	bar_ptr(6);
+
+	// Мдааа, прям убер фича, без которой мы жить не могли...
+	// Но это цветочки, смотрите дальше!
+	
+	int Foo(int (*)(int), int);
+
+	cout << Foo(foo1, 1) << endl;
+	cout << Foo(foo2, 1) << endl;
+
+	// Занятно да?
+	// Иногда может быть полезно...
+	// Ну и ссылки... Синтаксис похожий:
+
+	int(&foo_ref)() = foo;
+
+	// Но это не всё, помните прототипы?
+	// Ну вот есть такая штучка:
+	
+	typedef bool(&ValidateInt)(int);
+
+	// Ну и фича для С++ 11 и выше
+	
+	using ValidateFloat = bool(&)(float);
+
+	// Так, а что же это нам даёт?
+	// Нууу вот что:
+
+	bool Bar(int, ValidateInt);
+	bool BAR(float, ValidateFloat);
+
+	cout << Bar(5, bar1) << endl;
+	cout << BAR(0.5, bar2) << endl;
+
+	//
 	//
 
 
 }
+
+int foo() { cout << "foo" << endl; return 0; }
+void bar(int a) { cout << a << endl; }
+
+int Foo(int (*func)(int), int a) { return func(a) + 1; }
+int foo1(int a) { return a + 1; }
+int foo2(int a) { return a - 1; }
+
+// Да, не забываем про области видимости...
+// Пришлось дублировать код...
+
+typedef bool(&ValidateInt)(int);
+using ValidateFloat = bool(&)(float);
+
+bool Bar(int a, ValidateInt validate) { return validate(a); }
+bool BAR(float a, ValidateFloat validate) { return validate(a); }
+bool bar1(int a) { return a > 1; }
+bool bar2(float a) { return a > 0.5; }
+
 namespace SPACE_A { int a = 4; }
 
 void Exam_Examples()
