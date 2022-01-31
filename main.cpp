@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#pragma region Первый Семестр
+
 // Забыл как называется, но тут оно для того, чтобы НЕ компилировались те строки, которые вызовут исклучение
 #define SAVE
 
@@ -660,6 +662,25 @@ void HowToCode()
 #pragma endregion
 
 #pragma region Exam
+int foo() { cout << "foo" << endl; return 0; }
+void bar(int a) { cout << a << endl; }
+
+int Foo(int (*func)(int), int a) { return func(a) + 1; }
+int foo1(int a) { return a + 1; }
+int foo2(int a) { return a - 1; }
+
+// Да, не забываем про области видимости...
+// Пришлось дублировать код...
+
+typedef bool(&ValidateInt)(int);
+using ValidateFloat = bool(&)(float);
+
+bool Bar(int a, ValidateInt validate) { return validate(a); }
+bool BAR(float a, ValidateFloat validate) { return validate(a); }
+bool bar1(int a) { return a > 1; }
+bool bar2(float a) { return a > 0.5; }
+
+namespace SPACE_A { int a = 4; }
 
 // Часть 1. Теоретические вопросы
 void Part_1()
@@ -1191,26 +1212,6 @@ void Part_1()
 	// (не путайте с: cin >> a; cout << a; это другое!)
 }
 
-int foo() { cout << "foo" << endl; return 0; }
-void bar(int a) { cout << a << endl; }
-
-int Foo(int (*func)(int), int a) { return func(a) + 1; }
-int foo1(int a) { return a + 1; }
-int foo2(int a) { return a - 1; }
-
-// Да, не забываем про области видимости...
-// Пришлось дублировать код...
-
-typedef bool(&ValidateInt)(int);
-using ValidateFloat = bool(&)(float);
-
-bool Bar(int a, ValidateInt validate) { return validate(a); }
-bool BAR(float a, ValidateFloat validate) { return validate(a); }
-bool bar1(int a) { return a > 1; }
-bool bar2(float a) { return a > 0.5; }
-
-namespace SPACE_A { int a = 4; }
-
 void Exam_Examples()
 {
 	Part_1();
@@ -1218,6 +1219,229 @@ void Exam_Examples()
 
 #pragma endregion
 
+#pragma endregion
+
+#pragma region Второй семестр
+// Привет, с возвращением в учебную деятельность!
+// Как вам первая лекция? Сложно? чтож, топерь мой черёд делится экспириенсом.
+// Итак по порядку...
+// Енамы. Что это и с чем его едят:
+
+// Пробный енам, не имеющий никакого смысла, просто демонстирирует синтаксис
+enum TestEnum
+{
+	e1,
+	e2,
+	e3
+} 
+// А вот это уже экземпляр енама, причём в глобальной области видимости
+global_test1;
+// Этот экземпляр тоже в глобальной области видимости
+TestEnum global_test2;
+
+// Второй пробный енам, константы которого не доступны вне енама (Поясню в коде наже)
+enum class TestEnum2
+{
+	E1,
+	E2,
+	E3
+} global_test3;
+
+// Енам базовых цветов
+enum class Color
+{
+	Red,
+	Green,
+	Blue,
+	White,
+	Black,
+};
+
+void Enums()
+{
+	// Вуаля! Но так не хорошо..
+	global_test1 = e1;
+	global_test2 = e2;
+
+	// Я настаиваю чтобы вы задавали значения енамам вот так!
+	TestEnum local_enum = TestEnum::e1;
+
+	// Итак, что даёт приписка class?
+	// ну для начала она скравает константы енама
+	// global_test3 = E1; // Вот так уже не получится
+
+	// А значит единственный способ обратится к ним отстаётся тот который я вам и рекомендую
+	global_test3 = TestEnum2::E3;
+
+	// Чтож давайте пример кода посмотрим.
+	// Задача, ввести с клавиатуры цвет, и вывести его код на экран. Да можно эту задачу решить без енама, 
+	// но учтите, это потому что у нас нет графического интерфейса, по хорошему ввод мог осуществлятся с помощью выпадающего списка
+
+	Color color;
+	int list_number;
+	cout << "Красный	: 1\n";
+	cout << "Зелёный	: 2\n";
+	cout << "Синий	: 3\n";
+	cout << "Белый	: 4\n";
+	cout << "Чёрный	: 5\n";
+	cout << "Введите код цвета из списка:";
+	cin >> list_number;
+	color = (Color)(list_number-1);
+
+	string code;
+	switch (color)
+	{
+	case Color::Red:
+		code = "FF0000";
+		break;
+	case Color::Green:
+		code = "00FF00";
+		break;
+	case Color::Blue:
+		code = "0000FF";
+		break;
+	case Color::White:
+		code = "FFFFFF";
+		break;
+	case Color::Black:
+		code = "000000";
+	default:
+		break;
+	}
+	cout << "Код цвета = " << code << endl;
+
+	// Итак, с енамами пока всё, да можно их юзать иначе, менять их номера но зачем? их оснавная роль - ключ в switch case
+}
+
+// Чтож, структуры, первый шаг к ООП.
+// А именно то что в одной переменной инкапсулируются некоторые связанные данные.
+// Я сказал инкапсулируются? чёрт, это из ооп, ну не суть. В общем в одной переменной содержатся некоторые данные, остальное как дойдём до 3х парадигм ООП.
+
+// Демонстрационная структура
+struct Demo
+{
+	int a;
+	bool b;
+	char c;
+	double d;
+	enum class E
+	{
+		demo1,
+		demo2,
+		demo3
+	} e;
+	float f;
+};
+
+struct Address 
+{
+	int House_Number;
+	string Street;
+	string Sity;
+	string Country;
+	bool IsPrivate_House;
+	int Floor_Number;
+	int Flat_Number;
+};
+
+struct PersonData 
+{
+	struct 
+	{
+		string Name;
+		string SecondName;
+		bool Has_MiddleName;
+		string MidleName;
+	} FIO;
+	int Age; 
+	enum class PersonGender
+	{
+		Man,
+		Woman,
+		Other
+	} 
+	Gender; 
+	struct 
+	{
+		Address Living_Address;
+		char Phone[12];
+		string EMail;
+	} 
+	Contacts;
+};
+
+void Structs()
+{
+	// Чтож, вот экземпляр структуры Demo.
+	Demo d1;
+	d1.a = 1;
+	d1.b = true;
+	d1.c = '\0';
+	d1.d = 1.1;
+	d1.e = Demo::E::demo1;
+	d1.f = 2.2f;
+
+	// А вот его брат близнец
+	Demo d2 { 1, true, '\0', 1.1, Demo::E::demo1, 2.2f };
+	// Экземпляры d1 и d2 эквиволентны и значения их полей равны... Я опять назвал термин из ООП... 
+	// Хорошо, Поле - это такая переменная, которая хранится внутри экземпляра структуры или класса. Да это переменная, но правельнее называть её полем.
+
+	// Чтож теперь перейдём от того как можно, к тому как надо =)
+
+	// Закрепим знания
+
+	// Размер массива
+	const int size = 3;
+	// Массив данных
+	PersonData persons_list[size]
+	{
+		{{"Иван", "Иванов", true, "Иванович"}, 24, PersonData::PersonGender::Man, {{2, "Иванова", "Москва", "Россия", false, 2, 21}, "89248831204", "Ivanov@mail.ru"}},
+		{{"Ирина", "Сидорова", true ,"Павловна"}, 20, PersonData::PersonGender::Woman, {{2, "Победы", "Воронеж", "Россия", false, 12, 34}, "89248831204", "Sidorova@gmail.com"}},
+		{{"Stive", "Jobs" ,false}, 36, PersonData::PersonGender::Man, {{1, "Street", "Washington", "America", true}, "89248831204", "Microsoft.com"}},
+	};
+
+	// Цикл Foreach
+	for (PersonData person : persons_list) // Итерируемая персона
+	{
+		// Вывод на экран ФИО
+		cout << "Фио:\n\t" << person.FIO.SecondName << "\t" << person.FIO.Name << "\t" << person.FIO.MidleName << endl;
+
+		// Вывод на экран Возраста
+		cout << "Возраст:\n\t" << person.Age << endl;
+
+		// Вывод на экран Пола
+		cout << "Пол:\t";
+		switch (person.Gender)
+		{
+		case PersonData::PersonGender::Man:
+			cout << "Мужской";
+			break;
+		case PersonData::PersonGender::Woman:
+			cout << "Женский";
+			break;
+		case PersonData::PersonGender::Other:
+		default:
+			cout << "Другой";
+			break;
+		}
+		cout << endl;
+
+		// Вывод на экран Адреса
+		cout << "Адрес:\n\tСтрана: " << person.Contacts.Living_Address.Country << "\n\tГород: " << person.Contacts.Living_Address.Sity << "\n\tУлица: "
+			<< person.Contacts.Living_Address.Street << "\n\tДом: " << person.Contacts.Living_Address.House_Number;
+		if (person.Contacts.Living_Address.IsPrivate_House == false)
+			cout << "\n\tЭтаж: " << person.Contacts.Living_Address.Floor_Number << "\n\tКвартира: " << person.Contacts.Living_Address.Flat_Number;
+		cout << endl;
+
+		// Вывод на экран Телефона
+		cout << "Номер телефона:\n\t" << person.Contacts.Phone << endl;
+
+		// Вывод на экран E-mail
+		cout << "E-Mail:\n\t" << person.Contacts.EMail << endl;
+		cout << endl;
+	}
+}
+#pragma endregion
 
 
 int main() 
@@ -1225,7 +1449,12 @@ int main()
 	//Arrays();
 	//Strings();
 	//HowToCode();
-	Exam_Examples();
+	//Exam_Examples();
+
+	setlocale(LC_ALL, "rus");
+
+	//Enums();
+	Structs();
 
 	system("pause");
 
