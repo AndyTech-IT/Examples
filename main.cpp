@@ -1453,7 +1453,7 @@ int main()
 
 	setlocale(LC_ALL, "rus");
 
-	//Enums();
+	Enums();
 	Structs();
 
 	system("pause");
