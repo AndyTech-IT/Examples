@@ -1441,8 +1441,253 @@ void Structs()
 		cout << endl;
 	}
 }
+
+namespace OOP 
+{
+	/// Чтож, вот мы и добрались до самого интересного.
+	/// Итак, тема близкая к реальности и, возможно, поэтому все её понимают с трудом...
+	/// В чём идея? всё в программировании делается изза везких причин.
+	/// Идея в том чтобы разделить код на модули, каждый из которых выполняет поставленную ему задачу.
+	/// Это вроде и на лекции озвучили
+	/// Ну, теория это хорошо, но моя стезя - практика
+	/// ПРИСТУПИМ!
+	
+	/// <summary>
+	/// Демо класс, бесполезный - но наглядный
+	/// </summary>
+	class Demo_Class 
+	{
+	// Не обязательно, но лучше указать. (По умолчанию все поля - private)
+	// Итак, что оно делает? Делает оно следующее, всё что находится ниже доступно только внутри методов этого класса
+	private:
+		/// <summary>
+		/// Демо поле, с приватным модификатором доступа, значение по умолчанию := 0
+		/// </summary>
+		int _demo_field = 0;
+	// Здесь приватное пространство кончается, и начинается публичное.
+	// Это значит что все поля ниже доступны так же и вне методов класса
+	public:
+		/// <summary>
+		/// Демо поле, с публичным модификатором доступа
+		/// </summary>
+		int Demo_Field;
+
+	// И да, сектора модификаторов доступа могут дублироваться
+	private:
+		/// <summary>
+		/// Демо метод, модификатор доступа private
+		/// </summary>
+		int Demo_Method()
+		{
+
+		}
+	public:
+		/// <summary>
+		/// Демо метод, модификатор доступа public
+		/// </summary>
+		int DemoMethod()
+		{
+
+		}
+	};
+	/// Итак, новые термины: 
+	/// Метод - Функция внутри класса
+	/// Поле - Переменная внутри класса
+	/// Если ждёте от меня 100% точности, то простите, теория не моё.
+	
+	/// Чтож, демонстрировать синтаксис - хорошо, но яснее не стало
+	/// Перейдём к наглядному, популярный премер класс "Животные"
+	/// Но я возьму нечто другое =)
+	/// Компьютер, не... Калькулятор - просто... Видео камера, хммм... А давайте сделаем свой класс String?
+	/// Вполне возможно это будет будущее задание по лабам =)
+	
+	/// ПРИСТУПИМ (Или нет...)
+#pragma region Try To String
+
+	/// <summary>
+	/// Класс реализующий интерфейс взаимодействия со строкой
+	/// </summary>
+	class String
+	{
+	private:
+		char* data = NULL;
+		int len;
+
+		void Copy(const char copy[])
+		{
+			if (data)
+				delete data;
+
+			len = strlen(copy);
+			this->data = new char[len+1];
+			for (int i = 0; i < len; i++)
+				this->data[i] = copy[i];
+			this->data[len] = '\0';
+		}
+
+		friend ostream& operator << (ostream&, String&);
+		friend istream& operator >> (istream&, String&);
+
+		friend String operator +(const String&, const String);
+		friend String operator +(const String&, const char*);
+
+		friend void operator +=(String&, const String);
+		friend void operator +=(String&, const char*);
+
+	public:
+		String()
+		{
+			len = 0;
+			data = new char[len];
+		}
+
+		String(const char* data)
+		{
+			Copy(data);
+		}
+
+		String(const String& copy)
+		{
+			Copy(copy.data);
+		}
+
+
+		~String()
+		{
+			if (data)
+				delete data;
+		}
+	};
+
+	String operator + (const String& str1, const char* str2)
+	{
+		int len = str1.len + strlen(str2);
+		String result;
+		result.len = len;
+		result.data = new char[len + 1];
+		for (int i = 0; i < len; i++)
+		{
+			if (i < str1.len)
+				result.data[i] = str1.data[i];
+			else
+				result.data[i] = str2[i + str1.len];
+		}
+		result.data[len] = '\0';
+
+		return result;
+	}
+
+	String operator + (const String& str1, const String str2)
+	{
+		return str1 + str2.data;
+	}
+
+	void operator +=(String& str1, const String str2)
+	{
+		str1 = str1 + str2;
+	}
+
+	void operator += (String& str1, const char* str2)
+	{
+		str1 = str1 + str2;
+	}
+
+	ostream& operator << (ostream& stream, String& str)
+	{
+		stream << str.data;
+		return stream;
+	}
+
+	istream& operator >> (istream& stream, String& str)
+	{
+		stream.getline(str.data, 255);
+		return stream;
+	}
+
+	void String_Demo()
+	{
+		String str;
+		str = "Hello";
+		String str1 = str;
+		cout << str << endl << str1 << endl;
+		cin >> str;
+		cout << str << endl << str1 << endl;
+	}
 #pragma endregion
 
+	/// Нужно чтото попроще, и желательно с более простыми перегрузками, а лучше и вовсе без них...
+	/// Калькулятор... А что?
+	
+	static class Calculator
+	{
+	private:
+		enum class Operation_Type
+		{
+			Addition,
+			Subtraction,
+			Multiplication,
+			Division
+		};
+
+		struct Operation
+		{
+			union Operand
+			{
+				double arg;
+				Operation* operation = NULL;
+			} left, right;
+			Operation_Type type;
+			bool has_result;
+			double result;
+		};
+
+		static int operations_log_count;
+		static Operation* operations_log;
+	public:
+		static double Calculate(const char* data)
+		{
+			int len = strlen(data);
+			Operation operation;
+			double number = 0;
+			int under_zero = 1;
+			for (int i = 0; i < len; i++)
+			{
+				char c = data[i];
+				if ('0' <= c && c <= '9')
+				{
+					int i = c - '0';
+					if (under_zero == 1)
+						if (number == 0)
+							number = i;
+						else
+						{
+							number *= 10;
+							number += i;
+						}
+					else
+					{
+						number += (double)i / under_zero;
+						under_zero *= 10;
+					}
+				}
+				else if (c == '.' || c == ',')
+					under_zero = 10;
+				else if (c == '+')
+				{
+					operation.left.arg = number;
+					number = 0;
+					operation.type = Operation_Type::Addition;
+				}
+			}
+			cout << number << endl;
+			return number;
+		}
+	};
+	void Calculator_Demo()
+	{
+		Calculator::Calculate("12,123 + ");
+	}
+}
 
 int main() 
 {
@@ -1452,9 +1697,10 @@ int main()
 	//Exam_Examples();
 
 	setlocale(LC_ALL, "rus");
-
-	Enums();
-	Structs();
+	//Enums();
+	//Structs();
+	//OOP::String_Demo();
+	OOP::Calculator_Demo();
 
 	system("pause");
 
