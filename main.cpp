@@ -1919,21 +1919,22 @@ namespace OOP
 
 
 
-//int main() 
-//{
-//	//Arrays();
-//	//Strings();
-//	//HowToCode();
-//	//Exam_Examples();
-//
-//	setlocale(LC_ALL, "rus");
-//	//Enums();
-//	//Structs();
-//	//OOP::String_Demo();
-//	//OOP::Calculator_Demo();
-//	OOP::Console_PongGame::Start_PongGame();
-//
-//	system("pause");
-//
-//	return 0;
-//}
+int main() 
+{
+	//Arrays();
+	//Strings();
+	//HowToCode();
+	//Exam_Examples();
+
+	setlocale(LC_ALL, "rus");
+	//Enums();
+	//Structs();
+	//OOP::String_Demo();
+	//OOP::Calculator_Demo();
+	//OOP::Console_PongGame::Start_PongGame();
+	OOP::Test();
+
+	system("pause");
+
+	return 0;
+}
