@@ -1,6 +1,10 @@
 ﻿#include <Windows.h>
 #include <stdio.h>
 #include <iostream>
+#include <cstdio>
+#include <chrono>
+#include <thread>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -1442,7 +1446,7 @@ void Structs()
 	}
 }
 
-namespace OOP 
+namespace OOP
 {
 	/// Чтож, вот мы и добрались до самого интересного.
 	/// Итак, тема близкая к реальности и, возможно, поэтому все её понимают с трудом...
@@ -1451,28 +1455,28 @@ namespace OOP
 	/// Это вроде и на лекции озвучили
 	/// Ну, теория это хорошо, но моя стезя - практика
 	/// ПРИСТУПИМ!
-	
+
 	/// <summary>
 	/// Демо класс, бесполезный - но наглядный
 	/// </summary>
-	class Demo_Class 
+	class Demo_Class
 	{
-	// Не обязательно, но лучше указать. (По умолчанию все поля - private)
-	// Итак, что оно делает? Делает оно следующее, всё что находится ниже доступно только внутри методов этого класса
+		// Не обязательно, но лучше указать. (По умолчанию все поля - private)
+		// Итак, что оно делает? Делает оно следующее, всё что находится ниже доступно только внутри методов этого класса
 	private:
 		/// <summary>
 		/// Демо поле, с приватным модификатором доступа, значение по умолчанию := 0
 		/// </summary>
 		int _demo_field = 0;
-	// Здесь приватное пространство кончается, и начинается публичное.
-	// Это значит что все поля ниже доступны так же и вне методов класса
+		// Здесь приватное пространство кончается, и начинается публичное.
+		// Это значит что все поля ниже доступны так же и вне методов класса
 	public:
 		/// <summary>
 		/// Демо поле, с публичным модификатором доступа
 		/// </summary>
 		int Demo_Field;
 
-	// И да, сектора модификаторов доступа могут дублироваться
+		// И да, сектора модификаторов доступа могут дублироваться
 	private:
 		/// <summary>
 		/// Демо метод, модификатор доступа private
@@ -1494,14 +1498,15 @@ namespace OOP
 	/// Метод - Функция внутри класса
 	/// Поле - Переменная внутри класса
 	/// Если ждёте от меня 100% точности, то простите, теория не моё.
-	
+
 	/// Чтож, демонстрировать синтаксис - хорошо, но яснее не стало
 	/// Перейдём к наглядному, популярный премер класс "Животные"
 	/// Но я возьму нечто другое =)
 	/// Компьютер, не... Калькулятор - просто... Видео камера, хммм... А давайте сделаем свой класс String?
 	/// Вполне возможно это будет будущее задание по лабам =)
-	
+
 	/// ПРИСТУПИМ (Или нет...)
+
 #pragma region Try To String
 
 	/// <summary>
@@ -1519,7 +1524,7 @@ namespace OOP
 				delete data;
 
 			len = strlen(copy);
-			this->data = new char[len+1];
+			this->data = new char[len + 1];
 			for (int i = 0; i < len; i++)
 				this->data[i] = copy[i];
 			this->data[len] = '\0';
@@ -1617,7 +1622,10 @@ namespace OOP
 
 	/// Нужно чтото попроще, и желательно с более простыми перегрузками, а лучше и вовсе без них...
 	/// Калькулятор... А что?
+	/// (Снова мимо)
 	
+#pragma region Try to Calculator
+
 	static class Calculator
 	{
 	private:
@@ -1687,22 +1695,245 @@ namespace OOP
 	{
 		Calculator::Calculate("12,123 + ");
 	}
+
+#pragma endregion
+
+	/// Вот честно, хочется показать наглядный пример, и так чтобы он был близок к реальным задачам
+	/// Да можно банально и просто животные или машину/ракету но энто не то...
+	/// А что если понг в консоли?
+	/// Хм... а почему нет? Лутс гоу!
+	/// мдя... грёбаный С++ нихуя толком не сделать без танца с бубном и чтения тонны документации...
+
+#pragma region Try to pong
+
+	class Console_PongGame
+	{
+		enum class Game_Status
+		{
+			Play,
+			Pause,
+			Finish
+		};
+
+		static const int FPS = 30;
+		static const int FRAME_DELEY = 200;
+
+	private:
+		Game_Status status;
+
+	private:
+		static double clockToMilliseconds(clock_t ticks) {
+			// units/(units/time) => time (seconds) * 1000 = milliseconds
+			return (ticks / (double)CLOCKS_PER_SEC) * 1000.0;
+		}
+		Console_PongGame()
+		{
+			status = Game_Status::Play;
+		}
+
+		void GameUpdate()
+		{
+
+		}
+
+		void Finish_Game()
+		{
+
+		}
+
+		void Pause_Update()
+		{
+
+		}
+
+	public:
+		static void Start_PongGame()
+		{
+			Console_PongGame game;
+			std::chrono::system_clock::time_point a = std::chrono::system_clock::now();
+			std::chrono::system_clock::time_point b = std::chrono::system_clock::now();
+			while (true)
+			{
+				// Maintain designated frequency of 5 Hz (200 ms per frame)
+				a = std::chrono::system_clock::now();
+				std::chrono::duration<double, std::milli> work_time = a - b;
+
+				if (work_time.count() < FRAME_DELEY)
+				{
+					std::chrono::duration<double, std::milli> delta_ms(FRAME_DELEY - work_time.count());
+					auto delta_ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
+					std::this_thread::sleep_for(std::chrono::milliseconds(delta_ms_duration.count()));
+				}
+
+				b = std::chrono::system_clock::now();
+				std::chrono::duration<double, std::milli> sleep_time = b - a;
+
+				// Your code here
+				system("cls");
+				printf("Time: %f \n", (work_time + sleep_time).count());
+
+			}
+		}
+	};
+#define CCOLOR(r,g,b) ((FOREGROUND_RED*(r))|(FOREGROUND_GREEN*(g))|(FOREGROUND_BLUE*(b))|FOREGROUND_INTENSITY)
+#define NUM_BUGS  64
+#ifndef min
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef max
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+	static COORD      cscr = { 0 };
+	static CHAR_INFO* cbuf = NULL;
+
+	void fill_rect(short x, short y, short w, short h, WORD color);
+	void put_char(CHAR c, short x, short y, WORD color);
+	WORD async_key(HANDLE _in);
+
+	typedef struct {
+		short x;
+		short y;
+		short dx;
+		short dy;
+		WORD  color;
+		CHAR  ch;
+	} bug;
+
+	int Test(void) {
+		HANDLE cin = GetStdHandle(STD_INPUT_HANDLE);
+		HANDLE cout = GetStdHandle(STD_OUTPUT_HANDLE);
+		if ((cin == INVALID_HANDLE_VALUE) || (cout == INVALID_HANDLE_VALUE))
+			return GetLastError();
+
+		CONSOLE_SCREEN_BUFFER_INFO si;
+		if (!GetConsoleScreenBufferInfo(cout, &si))
+			return GetLastError();
+
+		si.dwSize.Y /= 7;
+		if (!SetConsoleScreenBufferSize(cout, si.dwSize))
+			return GetLastError();
+
+		si.srWindow.Bottom = si.dwSize.Y - 1;
+		SetConsoleWindowInfo(cout, TRUE, &si.srWindow);
+
+		SetConsoleTitleW(L"Пример двойной буферизации");
+
+		CONSOLE_CURSOR_INFO ci;
+		GetConsoleCursorInfo(cout, &ci);
+		ci.bVisible = FALSE;
+		SetConsoleCursorInfo(cout, &ci);
+
+		cscr = si.dwSize;
+		const COORD pos = { 0 };
+
+		cbuf = (CHAR_INFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY | HEAP_NO_SERIALIZE, sizeof(CHAR_INFO) * (cscr.X * cscr.Y));
+		if (cbuf == NULL)
+			return ERROR_OUTOFMEMORY;
+
+		//для примера
+		bug bugs[NUM_BUGS];
+		const bug* e = bugs + NUM_BUGS;
+		for (bug* i = bugs; i != e; ++i) {
+			i->ch = (CHAR)(rand() % 4) + 1;
+			i->x = rand() % cscr.X;
+			i->y = rand() % cscr.Y;
+			i->dx = (rand() % 2) ? -1 : +1;
+			i->dy = (rand() % 2) ? +1 : -1;
+			i->color = CCOLOR(rand() % 2, rand() % 2, rand() % 2);
+			if (!i->color)
+				i->color = CCOLOR(1, 1, 1);
+		}
+
+		//выход клавиша Esc
+		while (async_key(cin) != VK_ESCAPE) {
+			fill_rect(0, 0, cscr.X, cscr.Y, 0);
+
+			for (bug* i = bugs; i != e; ++i) {
+
+				i->x += i->dx;
+				if (i->x < 0 || i->x >= cscr.X) {
+					i->x = max(min(i->x, cscr.X - 1), 0);
+					i->dx = -i->dx;
+				}
+
+				i->y += i->dy;
+				if (i->y < 0 || i->y >= cscr.Y) {
+					i->y = max(min(i->y, cscr.Y - 1), 0);
+					i->dy = -i->dy;
+				}
+				put_char(i->ch, i->x, i->y, i->color);
+			}
+
+			//выводим
+			WriteConsoleOutputA(cout, cbuf, cscr, pos, &si.srWindow);
+			Sleep(40);
+		}
+
+		HeapFree(GetProcessHeap(), HEAP_NO_SERIALIZE, cbuf);
+		return 0;
+	}
+
+	//прямоугольник
+	void fill_rect(short x, short y, short w, short h, WORD color) {
+		int p;
+		x = min(max(0, x), cscr.X);
+		y = min(max(0, y), cscr.Y);
+		w = min(cscr.X, x + w);
+		h = min(cscr.Y, y + h);
+		for (short i = y; i < h; ++i) {
+			for (short j = x; j < w; ++j) {
+				p = i * cscr.X + j;
+				cbuf[p].Char.AsciiChar = '\0';
+				cbuf[p].Attributes = color;
+			}
+		}
+	}
+
+	//символ
+	void put_char(CHAR c, short x, short y, WORD color) {
+		if ((x >= 0 && x < cscr.X) && (y >= 0 && y < cscr.Y)) {
+			int i = y * cscr.X + x;
+			cbuf[i].Char.AsciiChar = c;
+			cbuf[i].Attributes = color;
+		}
+	}
+
+	WORD async_key(HANDLE _in) {
+		INPUT_RECORD rs[128];
+		DWORD n;
+		if (!PeekConsoleInput(_in, rs, 128, &n))
+			return WORD(~0);
+
+		for (DWORD i = 0; i < n; ++i) {
+			if ((rs[i].EventType == KEY_EVENT) && rs[i].Event.KeyEvent.bKeyDown) {
+				FlushConsoleInputBuffer(_in);
+				return rs[i].Event.KeyEvent.wVirtualKeyCode;
+			}
+		}
+		return WORD(~0);
+	}
+
+#pragma endregion
+	/// Чтож... я бездарный С++ прогер, получается, если не могу придумать нечто дельное и реализовать его на сраных плюсах
 }
 
-int main() 
-{
-	//Arrays();
-	//Strings();
-	//HowToCode();
-	//Exam_Examples();
 
-	setlocale(LC_ALL, "rus");
-	//Enums();
-	//Structs();
-	//OOP::String_Demo();
-	OOP::Calculator_Demo();
 
-	system("pause");
-
-	return 0;
-}
+//int main() 
+//{
+//	//Arrays();
+//	//Strings();
+//	//HowToCode();
+//	//Exam_Examples();
+//
+//	setlocale(LC_ALL, "rus");
+//	//Enums();
+//	//Structs();
+//	//OOP::String_Demo();
+//	//OOP::Calculator_Demo();
+//	OOP::Console_PongGame::Start_PongGame();
+//
+//	system("pause");
+//
+//	return 0;
+//}
