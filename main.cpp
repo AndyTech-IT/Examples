@@ -1623,7 +1623,7 @@ namespace OOP
 	/// Нужно чтото попроще, и желательно с более простыми перегрузками, а лучше и вовсе без них...
 	/// Калькулятор... А что?
 	/// (Снова мимо)
-	
+
 #pragma region Try to Calculator
 
 	static class Calculator
@@ -1915,6 +1915,231 @@ namespace OOP
 
 #pragma endregion
 	/// Чтож... я бездарный С++ прогер, получается, если не могу придумать нечто дельное и реализовать его на сраных плюсах
+	/// Ну, последняя попытка, и я на неё очень расчитываю!
+	/// Сделаем редактор космической ракеты!
+
+	class Console_SpaceShip_Editor
+	{
+		struct Point2
+		{
+			int x;
+			int y;
+		};
+
+		class RocketPart
+		{
+		public:
+			enum class Part_Type
+			{
+				NoseCone,
+				Parachute,
+				Radial_Parachute,
+				Cockpit,
+				FuelTank,
+				Radial_Truster,
+				Engine,
+				Decupler,
+			};
+
+		public:
+			struct RocketPart_Sprite
+			{
+				Point2 Size;
+				Point2 Position;
+				Part_Type P_Type;
+				char** Sprite;
+			};
+
+		public:
+			static RocketPart_Sprite Get_PartSprite(Part_Type type, Point2 position)
+			{
+				Point2 size{ 0, 0 };
+				RocketPart_Sprite sprite;
+				switch (type)
+				{
+				case Part_Type::NoseCone:
+					size = { 4, 2 };
+					position.x -= 2;
+					return RocketPart_Sprite{ size, position, type,
+						new char* [size.y]{
+							new char[] {" /\\ "},
+							new char[] {"//\\\\"}
+						}
+					};
+					break;
+
+				case Part_Type::Parachute:
+					size = { 4, 2 };
+					position.x -= 2;
+					sprite = RocketPart_Sprite{ size, position,  type,
+						new char* [2]{
+							new char[] {" __ "},
+							new char[] {"/||\\"},
+						}
+					};
+					break;
+
+				case Part_Type::Radial_Parachute:
+					size = { 12, 3 };
+					position.x -= 6;
+					sprite = RocketPart_Sprite{ size, position,  type,
+						new char* [size.y]{
+							new char[] {"/|        |\\"},
+							new char[] {"||        ||"},
+							new char[] {"\\|        |/"},
+						}
+					};
+					break;
+
+				case Part_Type::Cockpit:
+					size = { 8, 3 };
+					position.x -= 4;
+					sprite = RocketPart_Sprite{ size, position,  type,
+						new char* [size.y]{
+							new char[] {" /####\\ "},
+							new char[] {"/|(__)|\\"},
+							new char[] {"[||||||]"},
+						}
+					};
+					break;
+
+				case Part_Type::FuelTank:
+					size = { 8, 3 };
+					position.x -= 4;
+					sprite = RocketPart_Sprite{ size, position,  type,
+						new char* [size.y]{
+							new char[] {"[||||||]"},
+							new char[] {"||[--]||"},
+							new char[] {"[||||||]"},
+						}
+					};
+					break;
+				case Part_Type::Radial_Truster:
+					size = { 14, 4 };
+					position.x -= 7;
+					sprite = RocketPart_Sprite{ size, position,  type,
+						new char* [size.y]{
+							new char[] {"              "},
+							new char[] {"/|          |\\"},
+							new char[] {"||#        #||"},
+							new char[] {"^^          ^^"},
+						}
+					};
+					break;
+				case Part_Type::Engine:
+					size = { 8, 4 };
+					position.x -= 4;
+					sprite = RocketPart_Sprite{ size, position,  type,
+						new char* [size.y]{
+							new char[] {" \\||||/ "},
+							new char[] {"  //\\\\  "},
+							new char[] {" //||\\\\ "},
+							new char[] {"        "},
+						}
+					};
+					break;
+				case Part_Type::Decupler:
+					size = { 8, 4 };
+					position.x -= 4;
+					sprite = RocketPart_Sprite{ size, position,  type,
+						new char* [size.y]{
+							new char[] {"{      }"},
+							new char[] {"|      |"},
+							new char[] {"|      |"},
+							new char[] {"[======]"},
+						}
+					};
+					break;
+				default:
+					throw "Wrong type!";
+				}
+				return sprite;
+			}
+		};
+
+	private:
+		const Point2 Editor_Size{ 50, 25 };
+		static const int Radial_Parts_Count = 3;
+		const RocketPart::Part_Type Radial_Parts[Radial_Parts_Count] = {RocketPart::Part_Type::Radial_Parachute, RocketPart::Part_Type::Radial_Truster, RocketPart::Part_Type::Decupler };
+	private:
+		void Update_Editor(RocketPart::RocketPart_Sprite sprites[], int sprites_count)
+		{
+			for (int y = -1; y < Editor_Size.y + 1; y++)
+			{
+				for (int x = -1; x < Editor_Size.x + 1; x++)
+				{
+					if (y == -1 || y == Editor_Size.y)
+					{
+						cout << '-';
+					}
+					else if (x == -1 || x == Editor_Size.x)
+					{
+						cout << '|';
+					}
+					else
+					{
+						bool drawn = false;
+						for (int i = 0; i < sprites_count; i++)
+						{
+							RocketPart::RocketPart_Sprite curent_sprite = sprites[i];
+							if (y >= curent_sprite.Position.y
+								&& x >= curent_sprite.Position.x
+								&& curent_sprite.Position.y + curent_sprite.Size.y > y
+								&& curent_sprite.Position.x + curent_sprite.Size.x > x)
+							{
+								int xi = x - curent_sprite.Position.x;
+								int yi = y - curent_sprite.Position.y;
+								char c = curent_sprite.Sprite[yi][xi];
+								if (c != ' ' && drawn == false)
+								{
+									cout << c;
+									drawn = true;
+								}
+							}
+						}
+						if (drawn == false)
+							cout << ' ';
+					}
+				}
+				cout << endl;
+			}
+		}
+
+		void Build_Ship(RocketPart::Part_Type part_types[], int count, int y = 0)
+		{
+			RocketPart::RocketPart_Sprite* parts = new RocketPart::RocketPart_Sprite[count];
+			int center_x = Editor_Size.x / 2;
+			for (int i = 0; i < count; i++)
+			{
+				parts[i] = RocketPart::Get_PartSprite(part_types[i], Point2{ center_x, y });
+
+				bool is_radial = false;
+				for (int j = 0; j < Radial_Parts_Count; j++)
+					if (parts[i].P_Type == Radial_Parts[j])
+					{
+						is_radial = true;
+						break;
+					}
+				if (is_radial == false)
+					y += parts[i].Size.y;
+			}
+			Update_Editor(parts, count);
+		}
+
+	public:
+		void Start()
+		{
+			RocketPart::Part_Type parts[]{
+				RocketPart::Part_Type::Parachute,
+				RocketPart::Part_Type::Cockpit,
+				RocketPart::Part_Type::FuelTank,
+				RocketPart::Part_Type::Decupler, RocketPart::Part_Type::Engine,
+				RocketPart::Part_Type::Radial_Truster, RocketPart::Part_Type::FuelTank,
+				RocketPart::Part_Type::Engine,
+			};
+			Build_Ship(parts, 8, 5);
+		}
+	};
 }
 
 
@@ -1932,7 +2157,9 @@ int main()
 	//OOP::String_Demo();
 	//OOP::Calculator_Demo();
 	//OOP::Console_PongGame::Start_PongGame();
-	OOP::Test();
+	//OOP::Test();
+	OOP::Console_SpaceShip_Editor editor;
+	editor.Start();
 
 	system("pause");
 
