@@ -1918,6 +1918,19 @@ namespace OOP
 	/// Ну, последняя попытка, и я на неё очень расчитываю!
 	/// Сделаем редактор космической ракеты!
 
+	void Chainge_ConsolePixel(SHORT line, SHORT num, char ch)
+	{
+		HANDLE cons = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (cons != INVALID_HANDLE_VALUE)
+		{
+			CONSOLE_SCREEN_BUFFER_INFO old;
+			GetConsoleScreenBufferInfo(cons, &old);
+			SetConsoleCursorPosition(cons, { num, line });
+			std::cout << ch;
+			SetConsoleCursorPosition(cons, old.dwCursorPosition);
+		}
+	}
+
 	class Console_SpaceShip_Editor
 	{
 		struct Point2
@@ -1926,63 +1939,116 @@ namespace OOP
 			int y;
 		};
 
-		class RocketPart
+		static class RocketParts
 		{
 		public:
-			enum class Part_Type
+			enum class Stage_Type
 			{
 				NoseCone,
 				Parachute,
-				Radial_Parachute,
 				Cockpit,
 				FuelTank,
-				Radial_Truster,
 				Engine,
-				Decupler,
+				Decupler
+			};
+
+			enum class RadialParts_Type
+			{
+				Parachute,
+				Truster,
+			};
+
+			enum class Container_Type
+			{
+				ConeContainer,
+				Flat_Container,
 			};
 
 		public:
 			struct RocketPart_Sprite
 			{
 				Point2 Size;
-				Point2 Position;
-				Part_Type P_Type;
-				char** Sprite;
+				char** Sprite = NULL;
 			};
 
 		public:
-			static RocketPart_Sprite Get_PartSprite(Part_Type type, Point2 position)
+			static RocketPart_Sprite* Get_Container_Sprite(Container_Type type, Point2 contained_size)
 			{
-				Point2 size{ 0, 0 };
-				RocketPart_Sprite sprite;
+				Point2 size;
+				RocketPart_Sprite* sprite;
+				int height = contained_size.y;
+				int half_width;
 				switch (type)
 				{
-				case Part_Type::NoseCone:
-					size = { 4, 2 };
-					position.x -= 2;
-					return RocketPart_Sprite{ size, position, type,
-						new char* [size.y]{
-							new char[] {" /\\ "},
-							new char[] {"//\\\\"}
-						}
+				case OOP::Console_SpaceShip_Editor::RocketParts::Container_Type::ConeContainer:
+					size = { contained_size.x + 2, height + contained_size.x / 2 };
+					half_width = size.x / 2;
+					sprite = new RocketPart_Sprite{size,
+						new char*[size.y]
 					};
+					for (int i = 0; i < size.y; i++)
+					{
+						sprite->Sprite[i] = new char[size.x + 1];
+						for (int x = 0; x < size.x; x++)
+						{
+							sprite->Sprite[i][x] = ' ';
+						}
+						sprite->Sprite[i][size.x] = '\0';
+					}
+					for (int y = 0; y <= size.x / 2; y++)
+					{
+						int x1 = half_width - y-1;
+						int x2 = half_width + y;
+						sprite->Sprite[y][x1] = '/';
+						sprite->Sprite[y][x2] = '\\';
+					}
+					for (int i = size.x / 2; i < size.y-1; i++)
+					{
+						sprite->Sprite[i][0] = '|';
+						sprite->Sprite[i][size.x-1] = '|';
+					}
+					sprite->Sprite[size.y-1][0] = '\\';
+					sprite->Sprite[size.y-1][size.x - 1] = '/';
 					break;
 
-				case Part_Type::Parachute:
-					size = { 4, 2 };
-					position.x -= 2;
-					sprite = RocketPart_Sprite{ size, position,  type,
-						new char* [2]{
-							new char[] {" __ "},
-							new char[] {"/||\\"},
-						}
+				case Container_Type::Flat_Container:
+					size = { contained_size.x + 2, height };
+					sprite = new RocketPart_Sprite{ size,
+						new char* [size.y]
 					};
+
+					for (int i = 0; i < size.y; i++)
+					{
+						sprite->Sprite[i] = new char[size.x + 1];
+						for (int x = 0; x < size.x; x++)
+						{
+							sprite->Sprite[i][x] = ' ';
+						}
+						sprite->Sprite[i][size.x] = '\0';
+					}
+
+					for (int i = 0; i < size.y; i++)
+					{
+						sprite->Sprite[i][0] = '|';
+						sprite->Sprite[i][size.x - 1] = '|';
+					}
 					break;
 
-				case Part_Type::Radial_Parachute:
+				default:
+
+					throw "Wrong type!";
+				}
+				return sprite;
+			}
+			static RocketPart_Sprite* Get_RadialPart_Sprite(RadialParts_Type type)
+			{
+				Point2 size;
+				RocketPart_Sprite* sprite;
+				switch (type)
+				{
+				case RadialParts_Type::Parachute:
 					size = { 12, 3 };
-					position.x -= 6;
-					sprite = RocketPart_Sprite{ size, position,  type,
+					sprite = new RocketPart_Sprite{ size,
 						new char* [size.y]{
 							new char[] {"/|        |\\"},
 							new char[] {"||        ||"},
@@ -1991,10 +2057,52 @@ namespace OOP
 					};
 					break;
 
-				case Part_Type::Cockpit:
+				case RadialParts_Type::Truster:
+					size = { 14, 3 };
+					sprite = new RocketPart_Sprite{ size,
+						new char* [size.y]{
+							new char[] {"/|          |\\"},
+							new char[] {"||#        #||"},
+							new char[] {"^^          ^^"},
+						}
+					};
+					break;
+
+				default:
+					throw "Wrong type!";
+				}
+
+				return sprite;
+			}
+			static RocketPart_Sprite* Get_Stage_Sprite(Stage_Type type)
+			{
+				Point2 size{ 0, 0 };
+				RocketPart_Sprite* sprite;
+				switch (type)
+				{
+				case Stage_Type::NoseCone:
+					size = { 4, 2 };
+					sprite = new RocketPart_Sprite{ size,
+						new char* [size.y]{
+							new char[] {" /\\ "},
+							new char[] {"//\\\\"}
+						}
+					};
+					break;
+
+				case Stage_Type::Parachute:
+					size = { 4, 2 };
+					sprite = new RocketPart_Sprite{ size,
+						new char* [2]{
+							new char[] {" __ "},
+							new char[] {"/||\\"},
+						}
+					};
+					break;
+
+				case Stage_Type::Cockpit:
 					size = { 8, 3 };
-					position.x -= 4;
-					sprite = RocketPart_Sprite{ size, position,  type,
+					sprite = new RocketPart_Sprite{ size,
 						new char* [size.y]{
 							new char[] {" /####\\ "},
 							new char[] {"/|(__)|\\"},
@@ -2003,10 +2111,9 @@ namespace OOP
 					};
 					break;
 
-				case Part_Type::FuelTank:
+				case Stage_Type::FuelTank:
 					size = { 8, 3 };
-					position.x -= 4;
-					sprite = RocketPart_Sprite{ size, position,  type,
+					sprite = new RocketPart_Sprite{ size,
 						new char* [size.y]{
 							new char[] {"[||||||]"},
 							new char[] {"||[--]||"},
@@ -2014,130 +2121,223 @@ namespace OOP
 						}
 					};
 					break;
-				case Part_Type::Radial_Truster:
-					size = { 14, 4 };
-					position.x -= 7;
-					sprite = RocketPart_Sprite{ size, position,  type,
-						new char* [size.y]{
-							new char[] {"              "},
-							new char[] {"/|          |\\"},
-							new char[] {"||#        #||"},
-							new char[] {"^^          ^^"},
-						}
-					};
-					break;
-				case Part_Type::Engine:
-					size = { 8, 4 };
-					position.x -= 4;
-					sprite = RocketPart_Sprite{ size, position,  type,
+
+				case Stage_Type::Engine:
+					size = { 8, 3 };
+					sprite = new RocketPart_Sprite{ size,
 						new char* [size.y]{
 							new char[] {" \\||||/ "},
 							new char[] {"  //\\\\  "},
 							new char[] {" //||\\\\ "},
-							new char[] {"        "},
 						}
 					};
 					break;
-				case Part_Type::Decupler:
-					size = { 8, 4 };
-					position.x -= 4;
-					sprite = RocketPart_Sprite{ size, position,  type,
+				case Stage_Type::Decupler:
+					size = { 8, 1 };
+					sprite = new RocketPart_Sprite{ size,
 						new char* [size.y]{
-							new char[] {"{      }"},
-							new char[] {"|      |"},
-							new char[] {"|      |"},
-							new char[] {"[======]"},
+							new char[] {"[======]"}
 						}
 					};
 					break;
+
 				default:
 					throw "Wrong type!";
 				}
 				return sprite;
 			}
+			static void Draw_Part(RocketPart_Sprite part, Point2 top_left_point, Point2 editor_size)
+			{
+				for (int y = 0; y < part.Size.y; y++)
+				{
+					for (int x = 0; x < part.Size.x; x++)
+					{
+						char ch = part.Sprite[y][x];
+						int screen_x = top_left_point.x + x;
+						int screen_y = top_left_point.y + y;
+						bool is_h_edge = screen_x < 0 || screen_x >= editor_size.x;
+						bool is_v_edge = screen_y < 0 || screen_y >= editor_size.y;
+						if (ch == ' ' || is_h_edge || is_v_edge)
+							continue;
+						Chainge_ConsolePixel(screen_y, screen_x, ch);
+					}
+				}
+			}
+		};
+
+		struct Part_ListItem
+		{
+			RocketParts::RocketPart_Sprite* Main_Part = NULL;
+			RocketParts::RocketPart_Sprite* Radial_Part = NULL;
+			RocketParts::RocketPart_Sprite* Container = NULL;
+			Part_ListItem* Next_Part = NULL;
+			~Part_ListItem()
+			{
+				if (Main_Part)
+					delete Main_Part;
+				if (Radial_Part)
+					delete Radial_Part;
+				if (Container)
+					delete Container;
+				if (Next_Part)
+					delete Next_Part;
+			}
+		};
+
+		class Parts_List
+		{
+		private:
+			Part_ListItem* _first = NULL; 
+			Part_ListItem* _last = NULL;
+			int _count = 0;
+
+		public:
+			Parts_List() {};
+			~Parts_List()
+			{
+				if (_first)
+					delete _first;
+			}
+
+		private:
+			bool Index_IsOutOfRange(int index)
+			{
+				return index > _count + 1 || index < 0;
+			}
+
+		public:
+			int Get_Count()
+			{
+				return _count;
+			}
+			void Add(Part_ListItem* item)
+			{
+				if (_last)
+					_last->Next_Part = item;
+				else
+					_first = item;
+
+				_last = item;
+				_count++;
+			}
+
+			Part_ListItem* operator [](int index)
+			{
+				if (Index_IsOutOfRange(index))
+					throw "Index out of range!";
+
+				Part_ListItem* item = _first;
+				for (int i = 0; i < index; i++)
+				{
+					item = item->Next_Part;
+				}
+				return item;
+			}
+
+			void Remove(int index)
+			{
+				if (Index_IsOutOfRange(index - 1))
+				{
+					delete _first, _last;
+					_first = _last = NULL;
+					return;
+				}
+
+				Part_ListItem* previous = this->operator[](index-1);
+
+				if (Index_IsOutOfRange(index + 1))
+				{
+					delete _last;
+					_last = previous;
+					return;
+				}
+
+				Part_ListItem* next = this->operator[](index + 1);
+				
+				delete previous->Next_Part;
+				previous->Next_Part = next;
+			}
 		};
 
 	private:
-		const Point2 Editor_Size{ 50, 25 };
-		static const int Radial_Parts_Count = 3;
-		const RocketPart::Part_Type Radial_Parts[Radial_Parts_Count] = {RocketPart::Part_Type::Radial_Parachute, RocketPart::Part_Type::Radial_Truster, RocketPart::Part_Type::Decupler };
+		const Point2 Editor_Size{ 50, 50 };
+		const Point2 Border_Size{1, 1};
+		const char Border_H = '|';
+		const char Border_V = '-';
+		const char Border_C = '#';
 	private:
-		void Update_Editor(RocketPart::RocketPart_Sprite sprites[], int sprites_count)
+		Parts_List _parts;
+	private:
+
+		void Update_Editor()
 		{
-			for (int y = -1; y < Editor_Size.y + 1; y++)
+			system("cls");
+			for (int y = -Border_Size.y; y < Editor_Size.y + Border_Size.y; y++)
 			{
-				for (int x = -1; x < Editor_Size.x + 1; x++)
+				for (int x = -Border_Size.x; x < Editor_Size.x + Border_Size.x; x++)
 				{
-					if (y == -1 || y == Editor_Size.y)
-					{
-						cout << '-';
-					}
-					else if (x == -1 || x == Editor_Size.x)
-					{
-						cout << '|';
-					}
+					bool is_h_edge = x < 0 || x >= Editor_Size.x;
+					bool is_v_edge = y < 0 || y >= Editor_Size.y;
+					if (is_h_edge)
+						if (is_v_edge)
+							cout << Border_C;
+						else
+							cout << Border_H;
+					else if (is_v_edge)
+						cout << Border_V;
 					else
-					{
-						bool drawn = false;
-						for (int i = 0; i < sprites_count; i++)
-						{
-							RocketPart::RocketPart_Sprite curent_sprite = sprites[i];
-							if (y >= curent_sprite.Position.y
-								&& x >= curent_sprite.Position.x
-								&& curent_sprite.Position.y + curent_sprite.Size.y > y
-								&& curent_sprite.Position.x + curent_sprite.Size.x > x)
-							{
-								int xi = x - curent_sprite.Position.x;
-								int yi = y - curent_sprite.Position.y;
-								char c = curent_sprite.Sprite[yi][xi];
-								if (c != ' ' && drawn == false)
-								{
-									cout << c;
-									drawn = true;
-								}
-							}
-						}
-						if (drawn == false)
-							cout << ' ';
-					}
+						cout << ' ';
 				}
 				cout << endl;
 			}
+			Build_Ship();
 		}
 
-		void Build_Ship(RocketPart::Part_Type part_types[], int count, int y = 0)
+		void Build_Ship()
 		{
-			RocketPart::RocketPart_Sprite* parts = new RocketPart::RocketPart_Sprite[count];
-			int center_x = Editor_Size.x / 2;
-			for (int i = 0; i < count; i++)
+			int curent_y = Editor_Size.y + Border_Size.y - 1;
+			int center_x = (Editor_Size.x + Border_Size.x) / 2;
+			for (int i = 0; i < _parts.Get_Count(); i++)
 			{
-				parts[i] = RocketPart::Get_PartSprite(part_types[i], Point2{ center_x, y });
+				Part_ListItem* part = _parts[i];
+				if (part->Container)
+				{
+					RocketParts::Draw_Part(*part->Container, Point2{ center_x - part->Container->Size.x / 2, curent_y - part->Container->Size.y }, Editor_Size);
+				}
 
-				bool is_radial = false;
-				for (int j = 0; j < Radial_Parts_Count; j++)
-					if (parts[i].P_Type == Radial_Parts[j])
+				if (part->Main_Part)
+				{
+					RocketParts::Draw_Part(*part->Main_Part, Point2{ center_x - part->Main_Part->Size.x / 2, curent_y - part->Main_Part->Size.y }, Editor_Size);
+
+					if (part->Radial_Part)
 					{
-						is_radial = true;
-						break;
+						RocketParts::Draw_Part(*part->Radial_Part, Point2{ center_x - part->Radial_Part->Size.x / 2, curent_y - part->Radial_Part->Size.y }, Editor_Size);
 					}
-				if (is_radial == false)
-					y += parts[i].Size.y;
+					curent_y -= part->Main_Part->Size.y;
+				}
 			}
-			Update_Editor(parts, count);
 		}
 
 	public:
 		void Start()
 		{
-			RocketPart::Part_Type parts[]{
-				RocketPart::Part_Type::Parachute,
-				RocketPart::Part_Type::Cockpit,
-				RocketPart::Part_Type::FuelTank,
-				RocketPart::Part_Type::Decupler, RocketPart::Part_Type::Engine,
-				RocketPart::Part_Type::Radial_Truster, RocketPart::Part_Type::FuelTank,
-				RocketPart::Part_Type::Engine,
-			};
-			Build_Ship(parts, 8, 5);
+			_parts = Parts_List();
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Engine) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank), RocketParts::Get_RadialPart_Sprite(RocketParts::RadialParts_Type::Truster) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Decupler) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Engine), RocketParts::Get_Container_Sprite(RocketParts::Container_Type::Flat_Container, Point2{6, 3}) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank), RocketParts::Get_RadialPart_Sprite(RocketParts::RadialParts_Type::Truster) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Decupler) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Engine), RocketParts::Get_Container_Sprite(RocketParts::Container_Type::ConeContainer, Point2{8, 11}) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Cockpit) });
+			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Parachute) });
+
+
+			Update_Editor();
 		}
 	};
 }
@@ -2160,8 +2360,6 @@ int main()
 	//OOP::Test();
 	OOP::Console_SpaceShip_Editor editor;
 	editor.Start();
-
 	system("pause");
-
 	return 0;
 }
