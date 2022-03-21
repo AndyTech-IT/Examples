@@ -1939,6 +1939,19 @@ namespace OOP
 			int y;
 		};
 
+		enum class EditorCommand
+		{
+			Exit,
+			AddStageInTop,
+			AddStageInBottom,
+			DeleteStage,
+			NextStage,
+			PreviousStage,
+			ChaingeStage_MainPart,
+			ChaingeStage_RadialPart,
+			ChaingeStage_ContainerPart
+		};
+
 		static class RocketParts
 		{
 		public:
@@ -1968,6 +1981,7 @@ namespace OOP
 			struct RocketPart_Sprite
 			{
 				Point2 Size;
+				int TypeEnum;
 				char** Sprite = NULL;
 			};
 
@@ -1980,10 +1994,10 @@ namespace OOP
 				int half_width;
 				switch (type)
 				{
-				case OOP::Console_SpaceShip_Editor::RocketParts::Container_Type::ConeContainer:
+				case Console_SpaceShip_Editor::RocketParts::Container_Type::ConeContainer:
 					size = { contained_size.x + 2, height + contained_size.x / 2 };
 					half_width = size.x / 2;
-					sprite = new RocketPart_Sprite{size,
+					sprite = new RocketPart_Sprite{size, (int)type,
 						new char*[size.y]
 					};
 					for (int i = 0; i < size.y; i++)
@@ -2013,7 +2027,7 @@ namespace OOP
 
 				case Container_Type::Flat_Container:
 					size = { contained_size.x + 2, height };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size, (int)type,
 						new char* [size.y]
 					};
 
@@ -2036,7 +2050,7 @@ namespace OOP
 
 				default:
 
-					throw "Wrong type!";
+					return NULL;
 				}
 				return sprite;
 			}
@@ -2048,7 +2062,7 @@ namespace OOP
 				{
 				case RadialParts_Type::Parachute:
 					size = { 12, 3 };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size, (int)type,
 						new char* [size.y]{
 							new char[] {"/|        |\\"},
 							new char[] {"||        ||"},
@@ -2059,7 +2073,7 @@ namespace OOP
 
 				case RadialParts_Type::Truster:
 					size = { 14, 3 };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size,(int)type,
 						new char* [size.y]{
 							new char[] {"/|          |\\"},
 							new char[] {"||#        #||"},
@@ -2069,7 +2083,7 @@ namespace OOP
 					break;
 
 				default:
-					throw "Wrong type!";
+					return NULL;
 				}
 
 				return sprite;
@@ -2082,7 +2096,7 @@ namespace OOP
 				{
 				case Stage_Type::NoseCone:
 					size = { 4, 2 };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size,(int)type,
 						new char* [size.y]{
 							new char[] {" /\\ "},
 							new char[] {"//\\\\"}
@@ -2092,7 +2106,7 @@ namespace OOP
 
 				case Stage_Type::Parachute:
 					size = { 4, 2 };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size,(int)type,
 						new char* [2]{
 							new char[] {" __ "},
 							new char[] {"/||\\"},
@@ -2102,7 +2116,7 @@ namespace OOP
 
 				case Stage_Type::Cockpit:
 					size = { 8, 3 };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size,(int)type,
 						new char* [size.y]{
 							new char[] {" /####\\ "},
 							new char[] {"/|(__)|\\"},
@@ -2113,7 +2127,7 @@ namespace OOP
 
 				case Stage_Type::FuelTank:
 					size = { 8, 3 };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size,(int)type,
 						new char* [size.y]{
 							new char[] {"[||||||]"},
 							new char[] {"||[--]||"},
@@ -2123,18 +2137,18 @@ namespace OOP
 					break;
 
 				case Stage_Type::Engine:
-					size = { 8, 3 };
-					sprite = new RocketPart_Sprite{ size,
+					size = { 6, 3 };
+					sprite = new RocketPart_Sprite{ size,(int)type,
 						new char* [size.y]{
-							new char[] {" \\||||/ "},
-							new char[] {"  //\\\\  "},
-							new char[] {" //||\\\\ "},
+							new char[] {"\\||||/"},
+							new char[] {" //\\\\ "},
+							new char[] {"//||\\\\"},
 						}
 					};
 					break;
 				case Stage_Type::Decupler:
 					size = { 8, 1 };
-					sprite = new RocketPart_Sprite{ size,
+					sprite = new RocketPart_Sprite{ size,(int)type,
 						new char* [size.y]{
 							new char[] {"[======]"}
 						}
@@ -2142,14 +2156,24 @@ namespace OOP
 					break;
 
 				default:
-					throw "Wrong type!";
+					return NULL;
 				}
 				return sprite;
 			}
-			static void Draw_Part(RocketPart_Sprite part, Point2 top_left_point, Point2 editor_size)
+			static void Draw_Part(RocketPart_Sprite part, Point2 top_left_point, Point2 editor_size, bool is_selected = false)
 			{
 				for (int y = 0; y < part.Size.y; y++)
 				{
+					if ((y == 0 || y == part.Size.y-1) && is_selected)
+					{
+						int screen_y = top_left_point.y + y;
+						for (int x = part.Size.x + top_left_point.x + 5; x < editor_size.x - 1; x++)
+						{
+							Chainge_ConsolePixel(screen_y, x, '-');
+							Chainge_ConsolePixel(screen_y, editor_size.x - x, '-');
+						}
+					}
+
 					for (int x = 0; x < part.Size.x; x++)
 					{
 						char ch = part.Sprite[y][x];
@@ -2171,6 +2195,7 @@ namespace OOP
 			RocketParts::RocketPart_Sprite* Radial_Part = NULL;
 			RocketParts::RocketPart_Sprite* Container = NULL;
 			Part_ListItem* Next_Part = NULL;
+			Part_ListItem* Prev_Part = NULL;
 			~Part_ListItem()
 			{
 				if (Main_Part)
@@ -2179,8 +2204,6 @@ namespace OOP
 					delete Radial_Part;
 				if (Container)
 					delete Container;
-				if (Next_Part)
-					delete Next_Part;
 			}
 		};
 
@@ -2196,7 +2219,10 @@ namespace OOP
 			~Parts_List()
 			{
 				if (_first)
+				{
+					delete _first->Next_Part;
 					delete _first;
+				}
 			}
 
 		private:
@@ -2210,14 +2236,31 @@ namespace OOP
 			{
 				return _count;
 			}
-			void Add(Part_ListItem* item)
+			void AddInTail(Part_ListItem* item)
 			{
 				if (_last)
+				{
 					_last->Next_Part = item;
+					item->Prev_Part = _last;
+				}
 				else
 					_first = item;
 
 				_last = item;
+				_count++;
+			}
+
+			void AddInHead(Part_ListItem* item)
+			{
+				if (_first)
+				{
+					_first->Prev_Part = item;
+					item->Next_Part = _last;
+				}
+				else
+					_last = item;
+
+				_first = item;
 				_count++;
 			}
 
@@ -2236,26 +2279,44 @@ namespace OOP
 
 			void Remove(int index)
 			{
-				if (Index_IsOutOfRange(index - 1))
-				{
-					delete _first, _last;
-					_first = _last = NULL;
+				if (Index_IsOutOfRange(index))
 					return;
-				}
 
-				Part_ListItem* previous = this->operator[](index-1);
-
-				if (Index_IsOutOfRange(index + 1))
+				if (index == 0)
 				{
-					delete _last;
-					_last = previous;
-					return;
+					if (_count == 1)
+					{
+						delete _first, _last;
+						_first = _last = NULL;
+					}
+					else
+					{
+						Part_ListItem* next = _first->Next_Part;
+						delete _first;
+						_first = next;
+					}
 				}
+				else
+				{
+					Part_ListItem* previous = this->operator[](index - 1);
 
-				Part_ListItem* next = this->operator[](index + 1);
-				
-				delete previous->Next_Part;
-				previous->Next_Part = next;
+					if (index == _count - 1)
+					{
+						delete _last;
+						_last = previous;
+						_count--;
+						return;
+					}
+					else
+					{
+						Part_ListItem* next = this->operator[](index + 1);
+
+						delete previous->Next_Part;
+						previous->Next_Part = next;
+						next->Prev_Part = previous;
+					}
+				}
+				_count--;
 			}
 		};
 
@@ -2269,7 +2330,7 @@ namespace OOP
 		Parts_List _parts;
 	private:
 
-		void Update_Editor()
+		void Update_Editor(int curent_index)
 		{
 			system("cls");
 			for (int y = -Border_Size.y; y < Editor_Size.y + Border_Size.y; y++)
@@ -2290,15 +2351,16 @@ namespace OOP
 				}
 				cout << endl;
 			}
-			Build_Ship();
+			Build_Ship(curent_index);
 		}
 
-		void Build_Ship()
+		void Build_Ship(int curent_index)
 		{
 			int curent_y = Editor_Size.y + Border_Size.y - 1;
 			int center_x = (Editor_Size.x + Border_Size.x) / 2;
 			for (int i = 0; i < _parts.Get_Count(); i++)
 			{
+				bool is_selected = i == curent_index;
 				Part_ListItem* part = _parts[i];
 				if (part->Container)
 				{
@@ -2307,7 +2369,7 @@ namespace OOP
 
 				if (part->Main_Part)
 				{
-					RocketParts::Draw_Part(*part->Main_Part, Point2{ center_x - part->Main_Part->Size.x / 2, curent_y - part->Main_Part->Size.y }, Editor_Size);
+					RocketParts::Draw_Part(*part->Main_Part, Point2{ center_x - part->Main_Part->Size.x / 2, curent_y - part->Main_Part->Size.y }, Editor_Size, is_selected);
 
 					if (part->Radial_Part)
 					{
@@ -2318,26 +2380,208 @@ namespace OOP
 			}
 		}
 
+		RocketParts::Stage_Type SelectStage(Part_ListItem *&part)
+		{
+			if (part->Main_Part)
+			{
+				delete part->Main_Part;
+				part->Main_Part = NULL;
+			}
+
+			cout << "1) NoseCone" << endl;
+			cout << "2) Parachute" << endl;
+			cout << "3) Cockpit" << endl;
+			cout << "4) FuelTank" << endl;
+			cout << "5) Engine" << endl;
+			cout << "6) Decupler" << endl;
+			int t;
+			cout << "Select Type: ";
+			cin >> t;
+			t--;
+			part->Main_Part = RocketParts::Get_Stage_Sprite((RocketParts::Stage_Type)t);
+			return (RocketParts::Stage_Type)t;
+		}
+
+		void SelectRadial(Part_ListItem*& part, string& message)
+		{
+			if (part->Main_Part == NULL)
+			{
+				message = "MainPart is not exist!";
+				return;
+			}
+
+			if (part->Radial_Part)
+			{
+				delete part->Radial_Part;
+				part->Radial_Part = NULL;
+			}
+
+			cout << "0) Empty" << endl;
+			cout << "1) Parachute" << endl;
+			cout << "2) Truster" << endl;
+			int t;
+			cout << "Select Type: ";
+			cin >> t;
+			if (t == 0)
+				return;
+			t--;
+			part->Radial_Part = RocketParts::Get_RadialPart_Sprite((RocketParts::RadialParts_Type)t);
+		}
+
+		void SelectContainer(Part_ListItem*& part, string& message)
+		{
+			if (part->Main_Part == NULL)
+			{
+				message = "MainPart is not exist!";
+				return;
+			}
+
+			if (part->Container)
+			{
+				delete part->Container;
+				part->Container = NULL;
+			}
+
+			cout << "0) Empty" << endl;
+			cout << "1) ConeContainer" << endl;
+			cout << "2) Flat_Container" << endl;
+			int t;
+			cout << "Select Type: ";
+			cin >> t;
+			if (t == 0)
+				return;
+			t--;
+
+			Point2 size = part->Main_Part->Size;
+			cout << "Container height: ";
+			cin >> size.y;
+
+			part->Container = RocketParts::Get_Container_Sprite((RocketParts::Container_Type)t, size);
+		}
+
+		void NextStage(int& curent_index, string& message)
+		{
+			if (_parts.Get_Count() - 1 > curent_index)
+				curent_index++;
+			else
+				message = "Edge is researched!";
+		}
+		void PrevStage(int& curent_index, string& message)
+		{
+			if (0 < curent_index)
+				curent_index--;
+			else
+				message =  "Edge is researched!";
+		}
+
 	public:
 		void Start()
 		{
 			_parts = Parts_List();
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Engine) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank), RocketParts::Get_RadialPart_Sprite(RocketParts::RadialParts_Type::Truster) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Decupler) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Engine), RocketParts::Get_Container_Sprite(RocketParts::Container_Type::Flat_Container, Point2{6, 3}) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank), RocketParts::Get_RadialPart_Sprite(RocketParts::RadialParts_Type::Truster) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Decupler) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Engine), RocketParts::Get_Container_Sprite(RocketParts::Container_Type::ConeContainer, Point2{8, 11}) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::FuelTank) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Cockpit) });
-			_parts.Add(new Part_ListItem{ RocketParts::Get_Stage_Sprite(RocketParts::Stage_Type::Parachute) });
+			int command = -1;
+			int curent_stage_index = -1;
+			Part_ListItem* part;
+			string message;
 
+			while (true)
+			{
+				system("cls");
+				Update_Editor(curent_stage_index);
+				cout << message << endl;
+				message = "";
 
-			Update_Editor();
+				cout << "0) Exit" << endl;
+				cout << "1) AddStage on Top" << endl;
+				cout << "2) AddStage on Bottom" << endl;
+				cout << "3) DeleteStage" << endl;
+				cout << "4) NextStage" << endl;
+				cout << "5) PreviousStage" << endl;
+				cout << "6) ChaingeStage_MainPart" << endl;
+				cout << "7) ChaingeStage_RadialPart" << endl;
+				cout << "8) ChaingeStage_ContainerPart" << endl;
+				cout << "Enter command: ";
+				cin >> command;
+				if (curent_stage_index != -1)
+					part = _parts[curent_stage_index];
+				else
+					part = NULL;
+
+				switch ((EditorCommand)command)
+				{
+				case EditorCommand::AddStageInTop:
+				{
+					part = new Part_ListItem;
+					RocketParts::Stage_Type t = SelectStage(part);
+					if (t == RocketParts::Stage_Type::FuelTank)
+						SelectRadial(part, message);
+					if (t == RocketParts::Stage_Type::Decupler || t == RocketParts::Stage_Type::Engine)
+						SelectContainer(part, message);
+
+					_parts.AddInTail(part);
+					if (curent_stage_index == -1)
+						curent_stage_index = 0;
+					break;
+				}
+				case EditorCommand::AddStageInBottom:
+				{
+					part = new Part_ListItem;
+					RocketParts::Stage_Type t = SelectStage(part);
+					if (t == RocketParts::Stage_Type::FuelTank)
+						SelectRadial(part, message);
+					if (t == RocketParts::Stage_Type::Decupler || t == RocketParts::Stage_Type::Engine)
+						SelectContainer(part, message);
+
+					_parts.AddInHead(part);
+					if (curent_stage_index == -1)
+						curent_stage_index = 0;
+					break;
+				}
+				case EditorCommand::DeleteStage:
+					if (curent_stage_index != -1)
+					{
+						_parts.Remove(curent_stage_index);
+						if (curent_stage_index == _parts.Get_Count())
+							curent_stage_index--;
+					}
+					break;
+				case EditorCommand::NextStage:
+					NextStage(curent_stage_index, message);
+					break;
+				case EditorCommand::PreviousStage:
+					PrevStage(curent_stage_index, message);
+					break;
+				case EditorCommand::ChaingeStage_MainPart:
+					if (part)
+						SelectStage(part);
+					else
+						message = "Stage not exist!";
+					break;
+				case EditorCommand::ChaingeStage_RadialPart:
+					if (part)
+						if (part->Main_Part->TypeEnum == (int)RocketParts::Stage_Type::FuelTank)
+							SelectRadial(part, message);
+						else
+							message = "Incorect Part!";
+					else
+						message = "Stage not exist!";
+					break;
+				case EditorCommand::ChaingeStage_ContainerPart:
+					if (part)
+						if (part->Main_Part->TypeEnum == (int)RocketParts::Stage_Type::Decupler ||
+							part->Main_Part->TypeEnum == (int)RocketParts::Stage_Type::Engine)
+							SelectContainer(part, message);
+						else
+							message = "Incorrect Part!";
+					else
+						message = "Stage not exist!";
+					break;
+				case EditorCommand::Exit:
+					return;
+				default:
+					message = "Wrong command!";
+					break;
+				}
+			}
 		}
 	};
 }
